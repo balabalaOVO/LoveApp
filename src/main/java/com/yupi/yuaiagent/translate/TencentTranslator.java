@@ -1,4 +1,4 @@
-package com.yupi.yuaiagent.Tools;
+package com.yupi.yuaiagent.translate;
 
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;

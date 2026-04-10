@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.yupi.yuaiagent.Tools;
+package com.yupi.yuaiagent.translate;
 
-import java.lang.reflect.Type;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.tencentcloudapi.common.exception.TencentCloudSDKException;
 import com.tencentcloudapi.common.AbstractClient;
 import com.tencentcloudapi.common.profile.ClientProfile;
-import com.tencentcloudapi.common.JsonResponseModel;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.tmt.v20180321.models.*;
 

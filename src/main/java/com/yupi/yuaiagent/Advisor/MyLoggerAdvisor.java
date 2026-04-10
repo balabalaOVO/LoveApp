@@ -4,11 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClientMessageAggregator;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
-import org.springframework.ai.chat.client.advisor.api.CallAdvisor;
-import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
-import org.springframework.ai.chat.client.advisor.api.StreamAdvisor;
-import org.springframework.ai.chat.client.advisor.api.StreamAdvisorChain;
+import org.springframework.ai.chat.client.advisor.api.*;
 import reactor.core.publisher.Flux;
+
+import java.util.Map;
 
 @Slf4j
 public class MyLoggerAdvisor implements CallAdvisor, StreamAdvisor {
@@ -38,10 +37,10 @@ public class MyLoggerAdvisor implements CallAdvisor, StreamAdvisor {
         return request;
     }
 
+
     private void observeAfter(ChatClientResponse chatClientResponse) {
         //log.info("AI Response: {}", chatClientResponse.chatResponse().getResult().getOutput().getText());
         log.info("AI Response: ");
-        System.out.println("observeAfter-----------------------------------");
     }
 
     @Override
@@ -49,7 +48,6 @@ public class MyLoggerAdvisor implements CallAdvisor, StreamAdvisor {
         chatClientRequest = before(chatClientRequest);
         ChatClientResponse chatClientResponse = chain.nextCall(chatClientRequest);
         observeAfter(chatClientResponse);
-        System.out.println("adviseCall-----------------------------------");
         return chatClientResponse;
     }
 

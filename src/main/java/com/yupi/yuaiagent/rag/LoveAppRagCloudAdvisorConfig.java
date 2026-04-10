@@ -18,7 +18,7 @@ class LoveAppRagCloudAdvisorConfig {
     @Value("${spring.ai.dashscope.api-key}")
     private String dashScopeApiKey;
 
-    @Bean
+    //@Bean
     public Advisor loveAppRagCloudAdvisor() {
         DashScopeApi dashScopeApi = DashScopeApi.builder()
                 .apiKey(dashScopeApiKey)
