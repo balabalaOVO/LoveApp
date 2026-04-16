@@ -14,7 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.main.lazy-initialization=true")
 @Slf4j
 class LoveAppTest {
 
@@ -148,18 +148,18 @@ class LoveAppTest {
     }
     @Test
     void testMap() {
-        testMessage("规划一份2026年4月20日从北京到上海的旅行路线，并回答你是否使用了MCP服务");
+        testMessage("寻找一些关于爱情的图片");
     }
 
     @Test
     void doChatWithMcp() {
-        testMessage("我的对象住在太原市迎泽区，帮我规划一份5公里以内的约会地点");
+        testMessage("寻找一些关于爱情的图片");
     }
 
     private void testMessage(String message) {
         String chatId = UUID.randomUUID().toString();
-        //String answer = loveApp.doChatWithTools(message, chatId);
-        String answer = loveApp.doChatWithMcp(message, chatId);
+        String answer = loveApp.doChatWithTools(message, chatId);
+        //String answer = loveApp.doChatWithMcp(message, chatId);
         Assertions.assertNotNull(answer);
     }
 

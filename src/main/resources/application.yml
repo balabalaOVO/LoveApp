@@ -3,10 +3,18 @@ spring:
     name: yu-ai-agent
   profiles:
     active: local
+  ai:
+    mcp:
+      client:
+        stdio:
+          servers-configuration: classpath:mcp-servers.json
+
+
 server:
   port: 8123
   servlet:
     context-path: /api
+
 
 #springdoc-openapi 接口文档配置
 springdoc:

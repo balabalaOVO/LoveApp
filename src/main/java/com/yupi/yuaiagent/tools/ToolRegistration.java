@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
 @Configuration
 public class ToolRegistration {
 
@@ -46,7 +47,20 @@ public class ToolRegistration {
     public DateTimeTools dateTimeTools() {
         return new DateTimeTools();
     }
+    @Bean
+    public EmailTools emailTools() {
+        return new EmailTools();
+    }
 
+    @Bean
+    public ImageSearchTool imageSearchTool() {
+        return new ImageSearchTool();
+    }
+
+    @Bean
+    public TerminateTool terminateTool() {
+        return new TerminateTool();
+    }
     @Bean
     public ToolCallback[] allTools(
             FileOperationTool fileOperationTool,
@@ -56,7 +70,10 @@ public class ToolRegistration {
             TerminalOperationTool terminalOperationTool,
             PDFGenerationTool pdfGenerationTool,
             DateTimeTools dateTimeTools,
-            EmailTools emailTools) {
+            EmailTools emailTools,
+            ImageSearchTool imageSearchTool,
+            TerminateTool terminateTool
+            ) {
         return ToolCallbacks.from(
             fileOperationTool,
             webSearchTool,
@@ -65,7 +82,9 @@ public class ToolRegistration {
             terminalOperationTool,
             pdfGenerationTool,
             dateTimeTools,
-            emailTools
+            emailTools,
+            imageSearchTool,
+            terminateTool
         );
     }
 }
