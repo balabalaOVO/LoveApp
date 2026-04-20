@@ -18,6 +18,8 @@ import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.tool.ToolCallback;
 
 import java.util.List;
+import java.util.Scanner;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 @Data
 @Slf4j
 public class ToolCallAgent extends ReActAgent {  
+    private static final Scanner STDIN_SCANNER = new Scanner(System.in);
+
   
     // 可用的工具  
     private final ToolCallback[] availableTools;
@@ -39,6 +43,9 @@ public class ToolCallAgent extends ReActAgent {
   
     // 禁用内置的工具调用机制，自己维护上下文  
     private final ChatOptions chatOptions;
+
+    // 便于测试场景注入用户输入，实现可控的交互流程
+    private Function<String, String> userInputProvider;
 
     public ToolCallAgent(ToolCallback[] availableTools) {  
         super();  
@@ -59,8 +66,10 @@ public class ToolCallAgent extends ReActAgent {
     public boolean think() {
         if (getNextStepPrompt() != null && !getNextStepPrompt().isEmpty()) {
             UserMessage userMessage = new UserMessage(getNextStepPrompt());
+            //这里的MessaeList是BaseAgent中定义的父类属性
             getMessageList().add(userMessage);
         }
+
         List<Message> messageList = getMessageList();
         Prompt prompt = new Prompt(messageList, chatOptions);
         try {
@@ -76,7 +85,11 @@ public class ToolCallAgent extends ReActAgent {
             AssistantMessage assistantMessage = chatResponse.getResult().getOutput();
             // 输出提示信息
             String result = assistantMessage.getText();
+            //toolCallList是一个列表，每一个元素存放着要调用的方法的具体是参数
             List<AssistantMessage.ToolCall> toolCallList = assistantMessage.getToolCalls();
+
+            //getName() 返回的是 Agent 实例的名称，用于在日志中标识是哪个 Agent 在执行操作。
+            //getName() 来自 BaseAgent 类  private String name;
             log.info(getName() + "的思考: " + result);
             log.info(getName() + "选择了 " + toolCallList.size() + " 个工具来使用");
             String toolCallInfo = toolCallList.stream()
@@ -86,6 +99,20 @@ public class ToolCallAgent extends ReActAgent {
                     )
                     .collect(Collectors.joining("\n"));
             log.info(toolCallInfo);
+
+            if (result != null && result.contains("[ASK_USER]")) {
+                getMessageList().add(assistantMessage);
+                String question = result.substring(result.indexOf("[ASK_USER]") + 10).trim();
+                String userAnswer = requestUserInput(question);
+                if (userAnswer == null || userAnswer.trim().isEmpty()) {
+                    setState(AgentState.FINISHED);
+                    log.warn("未获取到用户输入，结束当前任务");
+                    return false;
+                }
+                getMessageList().add(new UserMessage("用户回答: " + userAnswer.trim()));
+                return false;
+            }
+
             if (toolCallList.isEmpty()) {
                 // 只有不调用工具时，才记录助手消息
                 getMessageList().add(assistantMessage);
@@ -100,6 +127,22 @@ public class ToolCallAgent extends ReActAgent {
                     new AssistantMessage("处理时遇到错误: " + e.getMessage()));
             return false;
         }
+    }
+
+    private String requestUserInput(String question) {
+        if (userInputProvider != null) {
+            return userInputProvider.apply(question);
+        }
+        // 在测试输出窗口等非交互环境中，避免阻塞读取标准输入
+        if (System.console() == null) {
+            log.warn("当前环境不支持命令行交互输入，请通过 userInputProvider 提供用户回答");
+            return null;
+        }
+        System.out.println("智能体需要你的帮助: " + question);
+        if (!STDIN_SCANNER.hasNextLine()) {
+            return null;
+        }
+        return STDIN_SCANNER.nextLine();
     }
 
     /**

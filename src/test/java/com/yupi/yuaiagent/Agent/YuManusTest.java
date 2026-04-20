@@ -5,7 +5,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 @SpringBootTest
 class YuManusTest {
@@ -15,10 +16,15 @@ class YuManusTest {
 
     @Test
     void run() {
+        Queue<String> answers = new ArrayDeque<>();
+        answers.add("旅游");
+        answers.add("上海");
+        answers.add("下周五");
+        answers.add("高铁");
+        yuManus.setUserInputProvider(question -> answers.isEmpty() ? "请继续" : answers.poll());
+
         String userPrompt = """  
-                我的另一半居住在上海临港区，请帮我找到附件合适的约会地点，  
-                并结合一些网络图片，制定一份详细的约会计划，  
-                并以 PDF 格式输出, 文字为中文
+                我要去北京
                 """;
         String answer = yuManus.run(userPrompt);
         Assertions.assertNotNull(answer);

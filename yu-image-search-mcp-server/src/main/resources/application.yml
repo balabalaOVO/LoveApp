@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: yu-image-search-mcp-server
+  profiles:
+     active: stdio
+  ai:
+    mcp:
+      server:
+        name: mcp-server
+        version: 1.0.0
+server:
+  port: 8127
+
+pexels:
+  API_KEY: Pqk7WNMlGH5JLCC7XTufR7DlUvN1QliWE3n67KUsOgp1ZBfIwwaLDk9Z
