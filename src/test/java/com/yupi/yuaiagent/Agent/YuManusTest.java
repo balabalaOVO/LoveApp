@@ -16,17 +16,13 @@ class YuManusTest {
 
     @Test
     void run() {
-        Queue<String> answers = new ArrayDeque<>();
-        answers.add("旅游");
-        answers.add("上海");
-        answers.add("下周五");
-        answers.add("高铁");
-        yuManus.setUserInputProvider(question -> answers.isEmpty() ? "请继续" : answers.poll());
 
         String userPrompt = """  
-                我要去北京
+                介绍一下你自己
                 """;
         String answer = yuManus.run(userPrompt);
+        System.out.println("==========================="
+                + answer + "===========================");
         Assertions.assertNotNull(answer);
     }
 }

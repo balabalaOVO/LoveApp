@@ -80,7 +80,7 @@ public class AiController {
     @GetMapping("/manus/chat")
     public SseEmitter doChatWithManus(String message) {
         YuManus yuManus = new YuManus(allTools, dashscopeChatModel);
-        return yuManus.runStream(message);
+       return yuManus.runStream(message);
     }
 
 

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.internal.StringUtil;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -43,6 +44,8 @@ public abstract class BaseAgent {
     // Memory（需要自主维护会话上下文）  
     private List<Message> messageList = new ArrayList<>();
 
+    //要输出的think内容
+    protected List<String> thinkText = new ArrayList<>();
 
     /**
      * 运行代理（流式输出）
@@ -84,7 +87,8 @@ public abstract class BaseAgent {
                         String result = "Step " + stepNumber + ": " + stepResult;
 
                         // 发送每一步的结果
-                        emitter.send(result);
+                        emitter.send(result + thinkText);
+                        //emitter.send();
                     }
                     // 检查是否超出步骤限制
                     if (currentStep >= maxSteps) {
