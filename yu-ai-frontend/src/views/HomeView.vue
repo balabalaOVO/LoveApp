@@ -1,5 +1,12 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import { authState, clearAuthState, isAuthenticated } from '../store/auth'
+
+const router = useRouter()
+
+const loggedIn = computed(() => isAuthenticated())
+const currentEmail = computed(() => authState.email || '已登录用户')
 
 const apps = [
   {
@@ -15,6 +22,11 @@ const apps = [
     badge: 'Manus Agent'
   }
 ]
+
+function logout() {
+  clearAuthState()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -23,6 +35,14 @@ const apps = [
       <p class="hero-kicker">YU AI WORKSPACE</p>
       <h1>选择你的 AI 应用</h1>
       <p>一个入口，切换不同智能体场景。点击下方卡片进入对应聊天室。</p>
+
+      <div class="home-auth-bar">
+        <RouterLink v-if="!loggedIn" class="home-auth-link" to="/login">登录 / 注册</RouterLink>
+        <div v-else class="home-auth-state">
+          <span>当前账号：{{ currentEmail }}</span>
+          <button type="button" class="home-logout-button" @click="logout">退出登录</button>
+        </div>
+      </div>
     </header>
 
     <div class="app-grid">

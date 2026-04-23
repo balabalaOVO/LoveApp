@@ -1,8 +1,26 @@
 import axios from 'axios'
+import { getAuthToken } from '../store/auth'
+
+function resolveApiBaseUrl() {
+  const envBase = import.meta.env.VITE_API_BASE_URL
+  if (envBase) {
+    return /^https?:\/\//i.test(envBase) ? envBase : new URL(envBase, window.location.origin).toString()
+  }
+  return `${window.location.origin}/api`
+}
 
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:8123/api',
+  baseURL: resolveApiBaseUrl(),
   timeout: 30000
+})
+
+apiClient.interceptors.request.use((config) => {
+  const token = getAuthToken()
+  if (token) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
 })
 
 export function buildApiUrl(path, params = {}) {
