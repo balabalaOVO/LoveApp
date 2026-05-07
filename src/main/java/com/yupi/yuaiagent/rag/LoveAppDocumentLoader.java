@@ -30,31 +30,22 @@ public class LoveAppDocumentLoader {
             Resource[] resources = resourcePatternResolver.getResources("classpath:document/*.md");
             for(Resource resource : resources) {
                 String filename = resource.getFilename();
-//                MarkdownDocumentReaderConfig config = MarkdownDocumentReaderConfig.builder()
-//                        .withHorizontalRuleCreateDocument(true)
-//                        .withIncludeCodeBlock(false)
-//                        .withIncludeBlockquote(false)
-//                        .withAdditionalMetadata("filename", filename) //additionalMetadata：允许您向所有创建的 Document 对象添加自定义元数据。（打标签）
-//                        .build();
-//                MarkdownDocumentReader reader = new MarkdownDocumentReader(resource, config);
-//                allDocuments.addAll(reader.get());
-
                 //提取元信息
                 //提取文档倒数第 3 和第 2 个字作为标签
                 String status = filename.substring(filename.length() - 6, filename.length() - 4);
                 String girlStatus = filename;
                 MarkdownDocumentReaderConfig config = MarkdownDocumentReaderConfig.builder()
-                        .withHorizontalRuleCreateDocument(true)
-                        .withIncludeCodeBlock(false)
-                        .withIncludeBlockquote(false)
-                        .withAdditionalMetadata("filename", filename) //元信息标注
-                        .withAdditionalMetadata("status", status)    //元信息标注
+                        .withHorizontalRuleCreateDocument(true)           // 按水平线(---)分割文档
+                        .withIncludeCodeBlock(false)                     // 排除代码块
+                        .withIncludeBlockquote(false)                   // 排除引用块
+                        .withAdditionalMetadata("filename", filename)  //元信息标注
+                        .withAdditionalMetadata("status", status)     //元信息标注
                         .build();
                 MarkdownDocumentReader reader = new MarkdownDocumentReader(resource, config);
                 List<Document> docs = reader.get();
                 allDocuments.addAll(docs);
                 log.info("文档的元信息: {}", allDocuments);
-                log.info("加载文档：{} | 元信息：{filename={}, status={}}",
+                log.info("---------------加载文档：{} | 元信息：{filename={}, status={}}",
                         filename, filename, status, docs.size());
 
             }
