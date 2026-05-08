@@ -10,7 +10,7 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -66,18 +66,18 @@ public class LoveApp {
 //    }
 
     //自定义构造函数
-    public LoveApp(ChatModel dashscopeChatModel) {
+    public LoveApp(ChatModel dashscopeChatModel, ChatMemoryRepository chatMemoryRepository) {
         System.out.println("LoveApp 中的 dashscopeChatModel hashCode: " + dashscopeChatModel.hashCode());
-        // 初始化基于内存的对话记忆
-        MessageWindowChatMemory chatMemory = MessageWindowChatMemory.builder()
-                .chatMemoryRepository(new InMemoryChatMemoryRepository())
+        // 初始化基于 MySQL 持久化的对话记忆
+        MessageWindowChatMemory windowMemory = MessageWindowChatMemory.builder()
+                .chatMemoryRepository(chatMemoryRepository)
                 .maxMessages(10)
                 .build();
 
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
-                        MessageChatMemoryAdvisor.builder(chatMemory).build(),
+                        MessageChatMemoryAdvisor.builder(windowMemory).build(),
                         new MyLoggerAdvisor()
                 ).build();
     }

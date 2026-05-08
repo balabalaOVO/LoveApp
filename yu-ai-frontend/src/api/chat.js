@@ -1,12 +1,15 @@
-import { buildApiUrl } from './http'
+import { apiClient, buildApiUrl } from './http'
+import { getAuthToken } from '../store/auth'
 
 export function openLoveChatSse({ message, chatId, onMessage, onError, onDone }) {
-  const url = buildApiUrl('/ai/love_app/chat/sse', { message, chatId })
+  const token = getAuthToken()
+  const url = buildApiUrl('/ai/love_app/chat/sse', { message, chatId, token })
   return openSseStream({ url, onMessage, onError, onDone })
 }
 
 export function openManusChatSse({ message, onMessage, onError, onDone }) {
-  const url = buildApiUrl('/ai/manus/chat', { message })
+  const token = getAuthToken()
+  const url = buildApiUrl('/ai/manus/chat', { message, token })
   return openSseStream({ url, onMessage, onError, onDone })
 }
 
@@ -31,4 +34,18 @@ function openSseStream({ url, onMessage, onError, onDone }) {
   return {
     close: () => source.close()
   }
+}
+
+export async function listConversations(appType = 'love_app') {
+  const response = await apiClient.get('/ai/conversations', { params: { appType } })
+  return response.data ?? []
+}
+
+export async function getConversationMessages(chatKey) {
+  const response = await apiClient.get(`/ai/conversations/${encodeURIComponent(chatKey)}/messages`)
+  return response.data ?? []
+}
+
+export async function deleteConversation(chatKey) {
+  await apiClient.delete(`/ai/conversations/${encodeURIComponent(chatKey)}`)
 }

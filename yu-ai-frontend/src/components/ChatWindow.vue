@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, onBeforeUnmount, ref } from 'vue'
+import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
   title: {
@@ -41,8 +41,14 @@ const props = defineProps({
   assistantAvatarAlt: {
     type: String,
     default: 'AI 头像'
+  },
+  initialMessages: {
+    type: Array,
+    default: () => []
   }
 })
+
+const emit = defineEmits(['first-message'])
 
 const messages = ref([])
 const inputText = ref('')
@@ -54,6 +60,39 @@ const stepCounter = ref(0)
 const activeStepMessageId = ref('')
 const isCapturingStepThought = ref(false)
 let streamController = null
+let hasSentFirstMessage = false
+
+watch(() => props.initialMessages, (newMessages) => {
+  if (!newMessages || newMessages.length === 0) {
+    messages.value = []
+    return
+  }
+  messages.value = newMessages.map((m) => ({
+    id: crypto.randomUUID(),
+    role: m.role,
+    content: m.content,
+    kind: 'reply',
+    loading: false
+  }))
+}, { immediate: true })
+
+watch(() => props.chatId, () => {
+  messages.value = []
+  hasSentFirstMessage = false
+  pendingThought.value = ''
+  stepCounter.value = 0
+  activeStepMessageId.value = ''
+  isCapturingStepThought.value = false
+  if (props.initialMessages && props.initialMessages.length > 0) {
+    messages.value = props.initialMessages.map((m) => ({
+      id: crypto.randomUUID(),
+      role: m.role,
+      content: m.content,
+      kind: 'reply',
+      loading: false
+    }))
+  }
+})
 
 function pushUserMessage(content) {
   messages.value.push({
@@ -445,6 +484,11 @@ function sendMessage() {
   activeAssistantId.value = assistantDraft.id
   isSending.value = true
   scrollToBottom()
+
+  if (!hasSentFirstMessage) {
+    hasSentFirstMessage = true
+    emit('first-message')
+  }
 
   closeCurrentStream()
 

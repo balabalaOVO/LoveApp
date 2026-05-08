@@ -48,6 +48,7 @@ public class JwtUtil {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
             return true;
         } catch (Exception e) {
+            System.err.println("JWT validateToken failed: " + e.getMessage());
             return false;
         }
     }

@@ -15,7 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)
-                .addPathPatterns("/api/**")           // 需要认证的接口路径
-                .excludePathPatterns("/auth/**", "/error");  // 排除登录、注册和错误路径
+                .addPathPatterns("/**")
+                .excludePathPatterns("/auth/**", "/error");
     }
 }

@@ -28,6 +28,11 @@ public class UserService {
         userMapper.insert(user);
     }
 
+    public Long getUserIdByEmail(String email) {
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
+        return user != null ? user.getId() : null;
+    }
+
     // 登录
     public LoginResponse login(LoginRequest request) throws Exception {
         User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, request.getEmail()));
