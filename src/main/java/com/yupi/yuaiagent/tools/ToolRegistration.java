@@ -1,11 +1,11 @@
 package com.yupi.yuaiagent.tools;
 
+import com.yupi.yuaiagent.Service.CosFileService;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 
 @Configuration
 public class ToolRegistration {
@@ -29,8 +29,8 @@ public class ToolRegistration {
     }
 
     @Bean
-    public ResourceDownloadTool resourceDownloadTool() {
-        return new ResourceDownloadTool();
+    public ResourceDownloadTool resourceDownloadTool(CosFileService cosFileService) {
+        return new ResourceDownloadTool(cosFileService);
     }
 
     @Bean
@@ -39,14 +39,15 @@ public class ToolRegistration {
     }
 
     @Bean
-    public PDFGenerationTool pdfGenerationTool() {
-        return new PDFGenerationTool();
+    public PDFGenerationTool pdfGenerationTool(CosFileService cosFileService) {
+        return new PDFGenerationTool(cosFileService);
     }
 
     @Bean
     public DateTimeTools dateTimeTools() {
         return new DateTimeTools();
     }
+
     @Bean
     public EmailTools emailTools() {
         return new EmailTools();
@@ -61,6 +62,7 @@ public class ToolRegistration {
     public TerminateTool terminateTool() {
         return new TerminateTool();
     }
+
     @Bean
     public ToolCallback[] allTools(
             FileOperationTool fileOperationTool,
@@ -73,18 +75,18 @@ public class ToolRegistration {
             EmailTools emailTools,
             ImageSearchTool imageSearchTool,
             TerminateTool terminateTool
-            ) {
+    ) {
         return ToolCallbacks.from(
-            fileOperationTool,
-            webSearchTool,
-            webScrapingTool,
-            resourceDownloadTool,
-            terminalOperationTool,
-            pdfGenerationTool,
-            dateTimeTools,
-            emailTools,
-            imageSearchTool,
-            terminateTool
+                fileOperationTool,
+                webSearchTool,
+                webScrapingTool,
+                resourceDownloadTool,
+                terminalOperationTool,
+                pdfGenerationTool,
+                dateTimeTools,
+                emailTools,
+                imageSearchTool,
+                terminateTool
         );
     }
 }

@@ -3,7 +3,9 @@ package com.yupi.yuaiagent.controller;
 import com.yupi.yuaiagent.Agent.YuManus;
 import com.yupi.yuaiagent.App.LoveApp;
 import com.yupi.yuaiagent.Service.ConversationService;
+import com.yupi.yuaiagent.Service.CosFileService;
 import com.yupi.yuaiagent.Service.UserService;
+import com.yupi.yuaiagent.config.AgentContextHolder;
 import com.yupi.yuaiagent.entity.Conversation;
 import com.yupi.yuaiagent.entity.MessageEntity;
 import jakarta.annotation.Resource;
@@ -42,22 +44,34 @@ public class AiController {
     @Resource
     private ConversationService conversationService;
 
+    @Resource
+    private CosFileService cosFileService;
+
     @GetMapping("/love_app/chat/sync")
     public String doChatWithLoveAppSync(String message, String chatId, HttpServletRequest request) {
-        ensureConversation(request, chatId, message);
-        return loveApp.doChat(message, chatId);
+        AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
+        AgentContextHolder.set(ctx);
+        try {
+            return loveApp.doChat(message, chatId);
+        } finally {
+            AgentContextHolder.clear();
+        }
     }
 
     @GetMapping(value = "/love_app/chat/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> doChatWithLoveAppSSE(String message, String chatId, HttpServletRequest request) {
-        ensureConversation(request, chatId, message);
-        return loveApp.doChatByStream(message, chatId);
+        AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
+        return loveApp.doChatByStream(message, chatId)
+                .doOnSubscribe(s -> AgentContextHolder.set(ctx))
+                .doFinally(s -> AgentContextHolder.clear());
     }
 
     @GetMapping(value = "/love_app/chat/sse")
     public Flux<ServerSentEvent<String>> doChatWithLoveAppSSE2(String message, String chatId, HttpServletRequest request) {
-        ensureConversation(request, chatId, message);
+        AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
         return loveApp.doChatByStream(message, chatId)
+                .doOnSubscribe(s -> AgentContextHolder.set(ctx))
+                .doFinally(s -> AgentContextHolder.clear())
                 .map(chunk -> ServerSentEvent.<String>builder()
                         .data(chunk)
                         .build());
@@ -65,8 +79,9 @@ public class AiController {
 
     @GetMapping("/love_app/chat/sse/emitter")
     public SseEmitter doChatWithLoveAppSseEmitter(String message, String chatId, HttpServletRequest request) {
-        ensureConversation(request, chatId, message);
+        AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
         SseEmitter emitter = new SseEmitter(180000L);
+        AgentContextHolder.set(ctx);
         loveApp.doChatByStream(message, chatId)
                 .subscribe(
                         chunk -> {
@@ -79,16 +94,35 @@ public class AiController {
                         emitter::completeWithError,
                         emitter::complete
                 );
+        emitter.onCompletion(AgentContextHolder::clear);
+        emitter.onError(e -> AgentContextHolder.clear());
+        emitter.onTimeout(AgentContextHolder::clear);
         return emitter;
     }
 
-    /**
-     * 流式调用 Manus 超级智能体
-     */
     @GetMapping("/manus/chat")
-    public SseEmitter doChatWithManus(String message) {
+    public SseEmitter doChatWithManus(String message, HttpServletRequest request) {
+        Long userId = getUserId(request);
+        AgentContextHolder.AgentContext ctx = new AgentContextHolder.AgentContext(userId, null);
+        AgentContextHolder.set(ctx);
         YuManus yuManus = new YuManus(allTools, dashscopeChatModel);
-        return yuManus.runStream(message);
+        SseEmitter emitter = yuManus.runStream(message);
+        emitter.onCompletion(AgentContextHolder::clear);
+        emitter.onError(e -> AgentContextHolder.clear());
+        emitter.onTimeout(AgentContextHolder::clear);
+        return emitter;
+    }
+
+    @GetMapping("/file/download")
+    public ResponseEntity<Void> downloadFile(@RequestParam String cosKey, @RequestParam String fileName) {
+        try {
+            String signedUrl = cosFileService.generateSignedUrl(cosKey, fileName);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", signedUrl)
+                    .build();
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "文件下载失败：" + e.getMessage());
+        }
     }
 
     @GetMapping("/conversations")
@@ -123,9 +157,10 @@ public class AiController {
         return ResponseEntity.ok(Map.of("message", "deleted"));
     }
 
-    private void ensureConversation(HttpServletRequest request, String chatId, String firstMessage) {
+    private AgentContextHolder.AgentContext ensureConversation(HttpServletRequest request, String chatId, String firstMessage) {
         Long userId = getUserId(request);
         conversationService.getOrCreateConversation(userId, chatId, "love_app", firstMessage);
+        return new AgentContextHolder.AgentContext(userId, chatId);
     }
 
     private Long getUserId(HttpServletRequest request) {

@@ -65,8 +65,10 @@ public class LoveApp {
 //                .build();
 //    }
 
-    //自定义构造函数
-    public LoveApp(ChatModel dashscopeChatModel, ChatMemoryRepository chatMemoryRepository) {
+    private final ToolCallback[] allTools;
+
+    public LoveApp(ChatModel dashscopeChatModel, ChatMemoryRepository chatMemoryRepository, ToolCallback[] allTools) {
+        this.allTools = allTools;
         System.out.println("LoveApp 中的 dashscopeChatModel hashCode: " + dashscopeChatModel.hashCode());
         // 初始化基于 MySQL 持久化的对话记忆
         MessageWindowChatMemory windowMemory = MessageWindowChatMemory.builder()
@@ -79,7 +81,9 @@ public class LoveApp {
                 .defaultAdvisors(
                         MessageChatMemoryAdvisor.builder(windowMemory).build(),
                         new MyLoggerAdvisor()
-                ).build();
+                )
+                .defaultToolCallbacks(allTools)
+                .build();
     }
 
     public String doChat(String message, String chatId) {
@@ -145,9 +149,6 @@ public class LoveApp {
         return content;
     }
 
-
-    @Resource
-    private ToolCallback[] allTools;
 
     public String doChatWithTools(String message, String chatId) {
         ChatResponse response = chatClient

@@ -16,6 +16,16 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/auth/**", "/error");
+                .excludePathPatterns("/auth/**", "/error")
+                .excludePathPatterns(
+                        "/auth/**",
+                        "/error",
+                        "/api/doc.html",           // Knife4j 文档页面
+                        "/doc.html",               // 有时路径直接是 /doc.html
+                        "/swagger-ui/**",          // Swagger UI 静态资源
+                        "/swagger-resources/**",   // Swagger 资源
+                        "/v3/api-docs/**",         // OpenAPI 规范接口
+                        "/webjars/**"              // 文档依赖的前端资源
+                );
     }
 }

@@ -51,6 +51,61 @@ const props = defineProps({
 const emit = defineEmits(['first-message'])
 
 const messages = ref([])
+
+const FILE_MARKER_RE = /\[FILE:name=([^|]+)\|url=([^|]+)\|(?:cosKey=([^|]+)\|)?size=(\d+)\]/g
+
+function extractFiles(message) {
+  if (!message.content || message.files) return
+  const files = []
+  let match
+  FILE_MARKER_RE.lastIndex = 0
+  while ((match = FILE_MARKER_RE.exec(message.content)) !== null) {
+    files.push({
+      name: match[1],
+      url: match[2],
+      cosKey: match[3] || null,
+      size: Number(match[4])
+    })
+  }
+  if (files.length > 0) {
+    message.files = files
+    message.content = message.content.replace(FILE_MARKER_RE, '').trim()
+  }
+}
+
+function formatFileSize(bytes) {
+  if (!bytes || bytes < 1024) return (bytes || 0) + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+const MARKDOWN_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g
+
+function renderMarkdownLinks(content) {
+  if (!content) return ''
+  const escaped = escapeHtml(content)
+  return escaped.replace(MARKDOWN_LINK_RE, (_match, text, url) => {
+    const safeUrl = url.replace(/"/g, '&quot;')
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="inline-link">${text}</a>`
+  })
+}
+
+function downloadFile(file) {
+  if (file.cosKey) {
+    const downloadUrl = `/api/ai/file/download?cosKey=${encodeURIComponent(file.cosKey)}&fileName=${encodeURIComponent(file.name)}`
+    window.open(downloadUrl, '_blank', 'noopener')
+  } else {
+    window.open(file.url, '_blank', 'noopener')
+  }
+}
 const inputText = ref('')
 const isSending = ref(false)
 const messageListRef = ref(null)
@@ -67,13 +122,17 @@ watch(() => props.initialMessages, (newMessages) => {
     messages.value = []
     return
   }
-  messages.value = newMessages.map((m) => ({
-    id: crypto.randomUUID(),
-    role: m.role,
-    content: m.content,
-    kind: 'reply',
-    loading: false
-  }))
+  messages.value = newMessages.map((m) => {
+    const msg = {
+      id: crypto.randomUUID(),
+      role: m.role,
+      content: m.content,
+      kind: 'reply',
+      loading: false
+    }
+    extractFiles(msg)
+    return msg
+  })
 }, { immediate: true })
 
 watch(() => props.chatId, () => {
@@ -84,13 +143,17 @@ watch(() => props.chatId, () => {
   activeStepMessageId.value = ''
   isCapturingStepThought.value = false
   if (props.initialMessages && props.initialMessages.length > 0) {
-    messages.value = props.initialMessages.map((m) => ({
-      id: crypto.randomUUID(),
-      role: m.role,
-      content: m.content,
-      kind: 'reply',
-      loading: false
-    }))
+    messages.value = props.initialMessages.map((m) => {
+      const msg = {
+        id: crypto.randomUUID(),
+        role: m.role,
+        content: m.content,
+        kind: 'reply',
+        loading: false
+      }
+      extractFiles(msg)
+      return msg
+    })
   }
 })
 
@@ -525,6 +588,8 @@ function sendMessage() {
         pendingThought.value = ''
       }
 
+      extractFiles(draft)
+
       if (!draft.content) {
         if (isStepMode()) {
           const draftIndex = messages.value.findIndex((item) => item.id === draft.id)
@@ -542,6 +607,9 @@ function sendMessage() {
       activeStepMessageId.value = ''
       isCapturingStepThought.value = false
       streamController = null
+      if (isStepMode()) {
+        messages.value.forEach((m) => extractFiles(m))
+      }
       await scrollToBottom()
     },
     onError: async (errorText) => {
@@ -600,7 +668,17 @@ onBeforeUnmount(() => {
         </div>
         <div class="message-bubble" :class="message.role === 'user' ? 'bubble-user' : 'bubble-assistant'">
           <p class="message-role">{{ message.role === 'user' ? '你' : 'AI' }}</p>
-          <p class="message-content">{{ message.content || (message.loading ? '思考中...' : '') }}</p>
+          <p class="message-content" v-if="message.content || message.loading" v-html="message.content ? renderMarkdownLinks(message.content) : (message.loading ? '思考中...' : '')"></p>
+          <div v-if="message.files && message.files.length" class="file-card-list">
+            <div v-for="(file, fi) in message.files" :key="fi" class="file-card" @click="downloadFile(file)">
+              <span class="file-card-icon">{{ file.name.endsWith('.pdf') ? '📄' : file.name.match(/\.(jpg|png|gif|svg|webp)$/i) ? '🖼' : '📁' }}</span>
+              <span class="file-card-info">
+                <span class="file-card-name">{{ file.name }}</span>
+                <span class="file-card-size">{{ formatFileSize(file.size) }}</span>
+              </span>
+              <span class="file-card-download">⬇ 下载</span>
+            </div>
+          </div>
         </div>
       </article>
 
