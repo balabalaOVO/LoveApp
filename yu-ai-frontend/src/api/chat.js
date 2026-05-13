@@ -1,14 +1,43 @@
 import { apiClient, buildApiUrl } from './http'
 import { getAuthToken } from '../store/auth'
 
-export function openLoveChatSse({ message, chatId, onMessage, onError, onDone }) {
+const AUTH_STORAGE_KEY = 'yu_ai_auth'
+
+function resolveToken() {
   const token = getAuthToken()
+  if (token) {
+    return token
+  }
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.token) {
+        return parsed.token
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return ''
+}
+
+export function openLoveChatSse({ message, chatId, onMessage, onError, onDone }) {
+  const token = resolveToken()
+  if (!token) {
+    onError?.('未登录或登录已过期，请重新登录。')
+    return { close: () => {} }
+  }
   const url = buildApiUrl('/ai/love_app/chat/sse', { message, chatId, token })
   return openSseStream({ url, onMessage, onError, onDone })
 }
 
 export function openManusChatSse({ message, onMessage, onError, onDone }) {
-  const token = getAuthToken()
+  const token = resolveToken()
+  if (!token) {
+    onError?.('未登录或登录已过期，请重新登录。')
+    return { close: () => {} }
+  }
   const url = buildApiUrl('/ai/manus/chat', { message, token })
   return openSseStream({ url, onMessage, onError, onDone })
 }

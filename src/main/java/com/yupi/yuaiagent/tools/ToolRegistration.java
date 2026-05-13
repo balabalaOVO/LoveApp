@@ -10,18 +10,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ToolRegistration {
 
-    @Value("${search-api.api-key}")
-    private String searchApiKey;
+//    @Value("${search-api.api-key}")
+//    private String searchApiKey;
 
     @Bean
     public FileOperationTool fileOperationTool() {
         return new FileOperationTool();
     }
 
-    @Bean
-    public WebSearchTool webSearchTool() {
-        return new WebSearchTool(searchApiKey);
-    }
+//    @Bean
+//    public WebSearchTool webSearchTool() {
+//        return new WebSearchTool(searchApiKey);
+//    }
 
     @Bean
     public WebScrapingTool webScrapingTool() {
@@ -66,7 +66,7 @@ public class ToolRegistration {
     @Bean
     public ToolCallback[] allTools(
             FileOperationTool fileOperationTool,
-            WebSearchTool webSearchTool,
+//            WebSearchTool webSearchTool,
             WebScrapingTool webScrapingTool,
             ResourceDownloadTool resourceDownloadTool,
             TerminalOperationTool terminalOperationTool,
@@ -78,7 +78,7 @@ public class ToolRegistration {
     ) {
         return ToolCallbacks.from(
                 fileOperationTool,
-                webSearchTool,
+//                webSearchTool,
                 webScrapingTool,
                 resourceDownloadTool,
                 terminalOperationTool,

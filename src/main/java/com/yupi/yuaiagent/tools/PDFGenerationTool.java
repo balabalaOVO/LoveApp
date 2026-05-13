@@ -1,6 +1,5 @@
 package com.yupi.yuaiagent.tools;
 
-import cn.hutool.core.io.FileUtil;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -9,13 +8,12 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.yupi.yuaiagent.Service.CosFileService;
 import com.yupi.yuaiagent.config.AgentContextHolder;
-import com.yupi.yuaiagent.constant.FileConstant;
 import com.yupi.yuaiagent.model.FileDownloadInfo;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 
 public class PDFGenerationTool {
 
@@ -29,15 +27,13 @@ public class PDFGenerationTool {
     public String generatePDF(
             @ToolParam(description = "Name of the file to save the generated PDF") String fileName,
             @ToolParam(description = "Content to be included in the PDF, support markdown image syntax ![alt](url) for inserting images") String content) {
-        String fileDir = FileConstant.FILE_SAVE_DIR + "/pdf";
-        String filePath = fileDir + "/" + fileName;
         try {
-            FileUtil.mkdir(fileDir);
-            try (PdfWriter writer = new PdfWriter(filePath);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (PdfWriter writer = new PdfWriter(baos);
                  PdfDocument pdf = new PdfDocument(writer);
                  Document document = new Document(pdf)) {
 
-                PdfFont font = PdfFontFactory.createFont("STSongStd-Light", "UniGB-UCS2-H");
+                PdfFont font = createChineseFont();
                 document.setFont(font);
 
                 java.util.regex.Pattern imagePattern = java.util.regex.Pattern.compile("!\\[.*?\\]\\((.*?)\\)");
@@ -66,27 +62,40 @@ public class PDFGenerationTool {
                 }
             }
 
-            return uploadAndFormat(fileName, Path.of(filePath));
+            byte[] pdfBytes = baos.toByteArray();
+            return uploadToCos(fileName, pdfBytes);
 
         } catch (IOException e) {
             return "Error generating PDF: " + e.getMessage();
         }
     }
 
-    private String uploadAndFormat(String fileName, Path localPath) {
+    private PdfFont createChineseFont() {
+        try {
+            return PdfFontFactory.createFont("STSongStd-Light", "UniGB-UCS2-H");
+        } catch (IOException e) {
+            try {
+                return PdfFontFactory.createFont();
+            } catch (IOException ex) {
+                throw new RuntimeException("Cannot create PDF font", ex);
+            }
+        }
+    }
+
+    private String uploadToCos(String fileName, byte[] pdfBytes) {
         if (cosFileService == null) {
-            return "PDF generated successfully to: " + localPath;
+            return "COS 未配置，无法上传文件。";
         }
         try {
             AgentContextHolder.AgentContext ctx = AgentContextHolder.get();
             Long userId = ctx != null ? ctx.userId() : 0L;
             String chatId = ctx != null ? ctx.chatId() : "unknown";
-            FileDownloadInfo info = cosFileService.uploadFile(userId, chatId, localPath);
+            FileDownloadInfo info = cosFileService.uploadBytes(userId, chatId, fileName, pdfBytes);
             return String.format(
                 "PDF 已生成并上传到云端，可下载查看。 [FILE:name=%s|url=%s|cosKey=%s|size=%d]",
                 fileName, info.getUrl(), info.getCosKey(), info.getSize());
         } catch (Exception e) {
-            return "PDF 本地生成成功：" + localPath + "，但云端上传失败：" + e.getMessage();
+            return "PDF 生成成功，但云端上传失败：" + e.getMessage();
         }
     }
 }

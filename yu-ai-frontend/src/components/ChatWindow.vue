@@ -1,6 +1,16 @@
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
+function generateId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
+}
+
 const props = defineProps({
   title: {
     type: String,
@@ -124,7 +134,7 @@ watch(() => props.initialMessages, (newMessages) => {
   }
   messages.value = newMessages.map((m) => {
     const msg = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       role: m.role,
       content: m.content,
       kind: 'reply',
@@ -145,7 +155,7 @@ watch(() => props.chatId, () => {
   if (props.initialMessages && props.initialMessages.length > 0) {
     messages.value = props.initialMessages.map((m) => {
       const msg = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         role: m.role,
         content: m.content,
         kind: 'reply',
@@ -159,7 +169,7 @@ watch(() => props.chatId, () => {
 
 function pushUserMessage(content) {
   messages.value.push({
-    id: crypto.randomUUID(),
+    id: generateId(),
     role: 'user',
     content
   })
@@ -167,7 +177,7 @@ function pushUserMessage(content) {
 
 function pushAssistantMessage() {
   const draft = {
-    id: crypto.randomUUID(),
+    id: generateId(),
     role: 'assistant',
     content: '',
     kind: 'reply',
@@ -179,7 +189,7 @@ function pushAssistantMessage() {
 
 function buildAssistantMessage(segment) {
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     role: 'assistant',
     content: segment.content,
     kind: segment.kind || 'reply',

@@ -13,8 +13,7 @@ public class TerminalOperationTool {
     public String executeTerminalCommand(@ToolParam(description = "Command to execute in the terminal") String command) {
         StringBuilder output = new StringBuilder();
         try {
-            ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", command);
-//            Process process = Runtime.getRuntime().exec(command);
+            ProcessBuilder builder = buildProcess(command);
             Process process = builder.start();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
@@ -22,13 +21,27 @@ public class TerminalOperationTool {
                     output.append(line).append("\n");
                 }
             }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
             int exitCode = process.waitFor();
             if (exitCode != 0) {
-                output.append("Command execution failed with exit code: ").append(exitCode);
+                output.append("Command exit code: ").append(exitCode);
             }
         } catch (IOException | InterruptedException e) {
             output.append("Error executing command: ").append(e.getMessage());
         }
         return output.toString();
+    }
+
+    private ProcessBuilder buildProcess(String command) {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win")) {
+            return new ProcessBuilder("cmd.exe", "/c", command);
+        }
+        return new ProcessBuilder("/bin/bash", "-c", command);
     }
 }

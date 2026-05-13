@@ -13,14 +13,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import reactor.core.publisher.Flux;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -58,27 +54,8 @@ public class AiController {
         }
     }
 
-    @GetMapping(value = "/love_app/chat/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> doChatWithLoveAppSSE(String message, String chatId, HttpServletRequest request) {
-        AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
-        return loveApp.doChatByStream(message, chatId)
-                .doOnSubscribe(s -> AgentContextHolder.set(ctx))
-                .doFinally(s -> AgentContextHolder.clear());
-    }
-
-    @GetMapping(value = "/love_app/chat/sse")
-    public Flux<ServerSentEvent<String>> doChatWithLoveAppSSE2(String message, String chatId, HttpServletRequest request) {
-        AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
-        return loveApp.doChatByStream(message, chatId)
-                .doOnSubscribe(s -> AgentContextHolder.set(ctx))
-                .doFinally(s -> AgentContextHolder.clear())
-                .map(chunk -> ServerSentEvent.<String>builder()
-                        .data(chunk)
-                        .build());
-    }
-
-    @GetMapping("/love_app/chat/sse/emitter")
-    public SseEmitter doChatWithLoveAppSseEmitter(String message, String chatId, HttpServletRequest request) {
+    @GetMapping("/love_app/chat/sse")
+    public SseEmitter doChatWithLoveAppSSE(String message, String chatId, HttpServletRequest request) {
         AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
         SseEmitter emitter = new SseEmitter(180000L);
         AgentContextHolder.set(ctx);

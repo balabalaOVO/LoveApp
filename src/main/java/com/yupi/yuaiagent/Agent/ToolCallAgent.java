@@ -30,8 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ToolCallAgent extends ReActAgent {  
     private static final Scanner STDIN_SCANNER = new Scanner(System.in);
-
-  
+    
     // 可用的工具  
     private final ToolCallback[] availableTools;
   

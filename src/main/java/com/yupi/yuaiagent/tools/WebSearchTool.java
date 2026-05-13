@@ -36,7 +36,15 @@ public class WebSearchTool {
             JSONObject jsonObject = JSONUtil.parseObj(response);
             // 提取 organic_results 部分
             JSONArray organicResults = jsonObject.getJSONArray("organic_results");
-            List<Object> objects = organicResults.subList(0, 5);
+            if (organicResults == null || organicResults.isEmpty()) {
+                String error = jsonObject.getStr("error");
+                if (error != null) {
+                    return "Search API error: " + error;
+                }
+                return "No search results found for: " + query + ". Use your training knowledge to answer.";
+            }
+            int limit = Math.min(organicResults.size(), 5);
+            List<Object> objects = organicResults.subList(0, limit);
             // 拼接搜索结果为字符串
             String result = objects.stream().map(obj -> {
                 JSONObject tmpJSONObject = (JSONObject) obj;
