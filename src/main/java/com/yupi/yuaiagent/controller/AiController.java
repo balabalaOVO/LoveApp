@@ -43,6 +43,7 @@ public class AiController {
     @Resource
     private CosFileService cosFileService;
 
+    //非流式返回响应
     @GetMapping("/love_app/chat/sync")
     public String doChatWithLoveAppSync(String message, String chatId, HttpServletRequest request) {
         AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
@@ -54,6 +55,7 @@ public class AiController {
         }
     }
 
+    //流式返回响应
     @GetMapping("/love_app/chat/sse")
     public SseEmitter doChatWithLoveAppSSE(String message, String chatId, HttpServletRequest request) {
         AgentContextHolder.AgentContext ctx = ensureConversation(request, chatId, message);
@@ -77,6 +79,7 @@ public class AiController {
         return emitter;
     }
 
+    //与智能体对话
     @GetMapping("/manus/chat")
     public SseEmitter doChatWithManus(String message, HttpServletRequest request) {
         Long userId = getUserId(request);
@@ -90,6 +93,7 @@ public class AiController {
         return emitter;
     }
 
+    //下载COS文件
     @GetMapping("/file/download")
     public ResponseEntity<Void> downloadFile(@RequestParam String cosKey, @RequestParam String fileName) {
         try {
@@ -102,18 +106,16 @@ public class AiController {
         }
     }
 
+    //查询用户对话列表
     @GetMapping("/conversations")
-    public List<Conversation> listConversations(
-            @RequestParam(defaultValue = "love_app") String appType,
-            HttpServletRequest request) {
+    public List<Conversation> listConversations(@RequestParam(defaultValue = "love_app") String appType, HttpServletRequest request) {
         Long userId = getUserId(request);
         return conversationService.listUserConversations(userId, appType);
     }
 
+    //获取指定会话的历史信息
     @GetMapping("/conversations/{chatKey}/messages")
-    public List<MessageEntity> getMessages(
-            @PathVariable String chatKey,
-            HttpServletRequest request) {
+    public List<MessageEntity> getMessages(@PathVariable String chatKey, HttpServletRequest request) {
         Long userId = getUserId(request);
         Conversation conv = conversationService.findByChatKeyAndUser(chatKey, userId);
         if (conv == null) {
@@ -122,10 +124,9 @@ public class AiController {
         return conversationService.getMessages(conv.getId());
     }
 
+    //删除指定会话
     @DeleteMapping("/conversations/{chatKey}")
-    public ResponseEntity<Map<String, String>> deleteConversation(
-            @PathVariable String chatKey,
-            HttpServletRequest request) {
+    public ResponseEntity<Map<String, String>> deleteConversation(@PathVariable String chatKey, HttpServletRequest request) {
         Long userId = getUserId(request);
         boolean deleted = conversationService.deleteConversation(chatKey, userId);
         if (!deleted) {
@@ -134,12 +135,14 @@ public class AiController {
         return ResponseEntity.ok(Map.of("message", "deleted"));
     }
 
+    //确保对话存在并设置上下文
     private AgentContextHolder.AgentContext ensureConversation(HttpServletRequest request, String chatId, String firstMessage) {
         Long userId = getUserId(request);
         conversationService.getOrCreateConversation(userId, chatId, "love_app", firstMessage);
         return new AgentContextHolder.AgentContext(userId, chatId);
     }
 
+    //从请求中获取用户ID
     private Long getUserId(HttpServletRequest request) {
         String email = (String) request.getAttribute("currentUserEmail");
         if (email == null) {

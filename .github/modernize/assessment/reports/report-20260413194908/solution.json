@@ -1,0 +1,12 @@
+{
+  "azure-database-postgresql-02000": "mi-postgresql",
+  "azure-password-01000": "plaintext-credential-to-azure-keyvault",
+  "azure-system-config-01000": "bare/configuration-management/environment-variables",
+  "mail-00000": "javax.email-send-to-azure-communication-service-email",
+  "jni-native-code-00001": "bare/java-native-code",
+  "local-storage-00001": "local-files-to-mounted-azure-storage",
+  "hardcoded-urls-00001": "bare/remote-communication/hardcoded-urls",
+  "dockerfile-00000": "containerization-copilot-agent",
+  "utf-8-by-default-00000": "bare/encoding-standards",
+  "utf-8-by-default-00010": "bare/encoding-standards"
+}

@@ -27,7 +27,6 @@ public class RetrievalAugmentationAdvisor {
                         .build())
                 .build();
     }
-
     //默认构造器 - 不过滤元数据
     @Bean
     Advisor defaultRetrievalAugmentationAdvisor() {

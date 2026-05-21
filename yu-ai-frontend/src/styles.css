@@ -19,11 +19,15 @@
   box-sizing: border-box;
 }
 
-html,
+html {
+  height: 100%;
+}
+
 body,
 #app {
   margin: 0;
   min-height: 100%;
+  min-height: 100dvh;
 }
 
 body {
@@ -31,6 +35,9 @@ body {
   color: var(--text-main);
   background: var(--bg-main);
   background-attachment: fixed;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .home-page,
@@ -41,6 +48,7 @@ body {
 
 .home-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-content: center;
   gap: 36px;
@@ -169,6 +177,7 @@ body {
 
 .chat-page {
   min-height: calc(100vh - 44px);
+  min-height: calc(100dvh - 44px);
   display: grid;
   grid-template-rows: auto 1fr auto;
   background: var(--card-bg);
@@ -545,6 +554,7 @@ body {
 
   .chat-page {
     min-height: calc(100vh - 38px);
+    min-height: calc(100dvh - 38px);
   }
 
   .chat-header {
@@ -573,6 +583,7 @@ body {
 .chat-layout {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -708,6 +719,7 @@ body {
   margin: 8px 16px 16px;
   width: auto;
   max-width: none;
+  min-height: 0;
 }
 
 @media (max-width: 900px) {
@@ -734,5 +746,6 @@ body {
 
   .chat-main .chat-page {
     margin: 4px 8px 8px;
+    min-height: 0;
   }
 }

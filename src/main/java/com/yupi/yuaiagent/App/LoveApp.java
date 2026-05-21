@@ -132,6 +132,7 @@ public class LoveApp {
         ChatResponse chatResponse = chatClient
                 .prompt()
                 .user(message)
+                //对话记忆功能 设置当前对话的id
                 .advisors(spec -> spec.param(ChatMemory.CONVERSATION_ID, chatId))
                 // 开启日志，便于观察效果
                 //.advisors(new MyLoggerAdvisor())
